@@ -15,25 +15,20 @@ class EmailChangeRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        // Verify the user ID matches
-        if (! hash_equals((string) $this->user()->getKey(), (string) $this->route('id'))) {
+        // Find the email change record first
+        $emailChange = $this->getEmailChange();
+        if (! $emailChange) {
             return false;
         }
 
-        // Find the email change record
-        $emailChange = $this->getEmailChange();
-        if (! $emailChange) {
+        // Verify the user ID from route matches the email change owner
+        if (! hash_equals((string) $emailChange->user_id, (string) $this->route('id'))) {
             return false;
         }
 
         // Verify the hash matches the current email
         $expectedHash = $this->generateHash($emailChange->current_email);
         if (! hash_equals($expectedHash, (string) $this->route('hash'))) {
-            return false;
-        }
-
-        // Verify the email change belongs to the user
-        if (! hash_equals((string) $emailChange->user_id, (string) $this->user()->getKey())) {
             return false;
         }
 
@@ -67,7 +62,10 @@ class EmailChangeRequest extends FormRequest
     {
         $emailChangeModel = config('email-change-confirmation.email_change_model');
 
-        return $emailChangeModel::find($this->route('email_change'));
+        // The email_change ID comes from the query string in signed URLs
+        $emailChangeId = $this->query('email_change');
+
+        return $emailChangeModel::find($emailChangeId);
     }
 
     /**

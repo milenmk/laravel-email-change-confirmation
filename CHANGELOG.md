@@ -2,7 +2,17 @@
 
 All notable changes to `laravel-email-change-confirmation` will be documented in this file.
 
-## [1.0.0] - 2025-01-13
+## V1.0.1
+
+#### Published at: 2025-08-14
+
+- [NEW] Notification on cancel request
+- Improved logging
+- various bug fixes
+
+## v1.0.0
+
+#### Published at: 2025-08-13
 
 ### Added
 

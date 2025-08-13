@@ -2,6 +2,7 @@
 
 namespace MilenMk\LaravelEmailChangeConfirmation\Tests;
 
+use Exception;
 use Illuminate\Support\Facades\Notification;
 use MilenMk\LaravelEmailChangeConfirmation\Models\EmailChange;
 use MilenMk\LaravelEmailChangeConfirmation\Notifications\EmailChangeConfirmation;
@@ -103,10 +104,25 @@ class EmailChangeServiceTest extends TestCase
 
         $service = new EmailChangeService;
 
-        // Same email should be invalid
-        $this->assertFalse($service->validateEmailChange($user, 'john@example.com'));
+        // Same email should throw exception
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('The new email address must be different from your current email address.');
+        $service->validateEmailChange($user, 'john@example.com');
+    }
 
-        // Different email should be valid
+    /**
+     * @test
+     */
+    public function validates_valid_email_change()
+    {
+        $user = $this->createUser([
+            'name' => 'John Doe',
+            'email' => 'john@example.com',
+        ]);
+
+        $service = new EmailChangeService;
+
+        // Different email should be valid (no exception thrown)
         $this->assertTrue($service->validateEmailChange($user, 'newemail@example.com'));
     }
 

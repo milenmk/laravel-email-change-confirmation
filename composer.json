@@ -1,7 +1,7 @@
 {
     "name": "milenmk/laravel-email-change-confirmation",
     "description": "A Laravel package for secure email change confirmation with support for both traditional controllers and Livewire components",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "license": "MIT",
     "keywords": [
         "laravel",

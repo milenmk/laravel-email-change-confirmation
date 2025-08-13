@@ -8,8 +8,9 @@ use Exception;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Notification;
+use Livewire\Component;
 use MilenMk\LaravelEmailChangeConfirmation\Models\EmailChange;
+use MilenMk\LaravelEmailChangeConfirmation\Notifications\EmailChangeCancelled;
 
 class EmailChangeService
 {
@@ -56,17 +57,19 @@ class EmailChangeService
         // Prepare update data
         $updateData = ['email' => $emailChange->new_email];
 
-        // Reset email verification if user implements MustVerifyEmail
-        if ($user instanceof MustVerifyEmail) {
-            $updateData['email_verified_at'] = null;
-        }
-
         // Use updateQuietly to bypass model events (including our observer)
         // This prevents the observer from interfering with the confirmation process
         $user->updateQuietly($updateData);
 
         // Mark email change as confirmed
         $emailChange->confirm();
+
+        // Reset email verification if user implements MustVerifyEmail
+        if ($user instanceof MustVerifyEmail) {
+            // $updateData['email_verified_at'] = null;
+            $user->email_verified_at = null;
+            $user->update();
+        }
 
         // Send email verification if enabled and user implements MustVerifyEmail
         if (
@@ -110,34 +113,58 @@ class EmailChangeService
     {
         $emailChangeModel = config('email-change-confirmation.email_change_model');
 
-        return $emailChangeModel::where('user_id', $user->getKey())
+        // Get pending changes before cancelling to send notification
+        $pendingChanges = $emailChangeModel::where('user_id', $user->getKey())
+            ->pending()
+            ->get();
+
+        if ($pendingChanges->isEmpty()) {
+            return 0;
+        }
+
+        // Cancel the changes
+        $cancelled = $emailChangeModel::where('user_id', $user->getKey())
             ->pending()
             ->update(['change_denied_at' => now()]);
+
+        // Send notification about cancellation
+        if ($cancelled > 0 && $this->canSendNotification($user)) {
+            $this->sendCancellationNotification($user, $pendingChanges);
+        }
+
+        return $cancelled;
     }
 
     /**
      * Check if an email change is valid and can be processed.
+     * Returns true if valid, throws exception with specific error message if not.
      */
     public function validateEmailChange(Model $user, string $newEmail): bool
     {
         // Check if new email is different from current
         if ($user->email === $newEmail) {
-            return false;
+            throw new Exception('The new email address must be different from your current email address.');
         }
 
         // Check if user can request email change
         if (method_exists($user, 'canRequestEmailChange') && ! $user->canRequestEmailChange()) {
-            return false;
+            $maxPending = config('email-change-confirmation.max_pending_changes_per_user', 1);
+            throw new Exception(
+                "You already have {$maxPending} pending email change request(s). Please wait for them to be processed or cancel them before requesting a new one.",
+            );
         }
 
         // Check against blocked domains
         if (! $this->isEmailDomainAllowed($newEmail)) {
-            return false;
+            throw new Exception('This email domain is not allowed. Please use a different email address.');
         }
 
         // Check for recent requests (rate limiting)
         if (! $this->isWithinRateLimit($user)) {
-            return false;
+            $maxRequests = config('email-change-confirmation.max_requests_per_hour', 5);
+            throw new Exception(
+                "You have reached the maximum of {$maxRequests} email change requests per hour. Please try again later.",
+            );
         }
 
         return true;
@@ -158,6 +185,17 @@ class EmailChangeService
     }
 
     /**
+     * Check if the user can receive notifications.
+     */
+    protected function canSendNotification(Model $user): bool
+    {
+        // Check if user uses Notifiable trait
+        $traits = class_uses_recursive(get_class($user));
+
+        return in_array(Notifiable::class, $traits) || method_exists($user, 'notify');
+    }
+
+    /**
      * Send notification to user about the email change request.
      */
     protected function sendUserNotification(Model $user): void
@@ -173,7 +211,7 @@ class EmailChangeService
             $eventName = config('email-change-confirmation.livewire_notification_event');
 
             // Dispatch browser event if in Livewire context
-            if (class_exists(\Livewire\Component::class) && app()->bound('livewire')) {
+            if (class_exists(Component::class) && app()->bound('livewire')) {
                 try {
                     $component = app('livewire')->current();
                     if ($component) {
@@ -192,14 +230,15 @@ class EmailChangeService
     }
 
     /**
-     * Check if the user can receive notifications.
+     * Send cancellation notification to user.
      */
-    protected function canSendNotification(Model $user): bool
+    protected function sendCancellationNotification(Model $user, $pendingChanges): void
     {
-        // Check if user uses Notifiable trait
-        $traits = class_uses_recursive(get_class($user));
+        // Get the first cancelled email for the notification
+        $cancelledEmail = $pendingChanges->first()->new_email;
+        $cancelledCount = $pendingChanges->count();
 
-        return in_array(Notifiable::class, $traits) || method_exists($user, 'notify');
+        $user->notify(new EmailChangeCancelled($cancelledEmail, $cancelledCount));
     }
 
     /**

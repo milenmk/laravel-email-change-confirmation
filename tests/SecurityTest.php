@@ -72,11 +72,39 @@ class SecurityTest extends TestCase
         $user = $this->createUser();
         $service = new EmailChangeService;
 
-        // Test blocked domain
-        $this->assertFalse($service->validateEmailChange($user, 'test@tempmail.com'));
-        $this->assertFalse($service->validateEmailChange($user, 'test@SPAM.COM')); // Case insensitive
+        // Test blocked domain - should throw exception
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('This email domain is not allowed. Please use a different email address.');
+        $service->validateEmailChange($user, 'test@tempmail.com');
+    }
 
-        // Test allowed domain
+    /**
+     * @test
+     */
+    public function blocked_domains_case_insensitive_test()
+    {
+        Config::set('email-change-confirmation.blocked_domains', ['tempmail.com', 'spam.com']);
+
+        $user = $this->createUser();
+        $service = new EmailChangeService;
+
+        // Test case insensitive blocked domain
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('This email domain is not allowed. Please use a different email address.');
+        $service->validateEmailChange($user, 'test@SPAM.COM');
+    }
+
+    /**
+     * @test
+     */
+    public function allowed_domains_work()
+    {
+        Config::set('email-change-confirmation.blocked_domains', ['tempmail.com', 'spam.com']);
+
+        $user = $this->createUser();
+        $service = new EmailChangeService;
+
+        // Test allowed domain - should not throw exception
         $this->assertTrue($service->validateEmailChange($user, 'test@gmail.com'));
     }
 
@@ -86,6 +114,7 @@ class SecurityTest extends TestCase
     public function rate_limiting_works()
     {
         Config::set('email-change-confirmation.max_requests_per_hour', 2);
+        Config::set('email-change-confirmation.max_pending_changes_per_user', 5);
 
         $user = $this->createUser();
         $service = new EmailChangeService;
@@ -107,7 +136,11 @@ class SecurityTest extends TestCase
         ]);
 
         // Third request should be blocked by rate limiting
-        $this->assertFalse($service->validateEmailChange($user, 'test3@example.com'));
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage(
+            'You have reached the maximum of 2 email change requests per hour. Please try again later.',
+        );
+        $service->validateEmailChange($user, 'test3@example.com');
     }
 
     /**
@@ -178,10 +211,21 @@ class SecurityTest extends TestCase
         $user = $this->createUser(['email' => 'test@example.com']);
         $service = new EmailChangeService;
 
-        // Trying to change to same email should fail
-        $this->assertFalse($service->validateEmailChange($user, 'test@example.com'));
+        // Trying to change to same email should throw exception
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('The new email address must be different from your current email address.');
+        $service->validateEmailChange($user, 'test@example.com');
+    }
 
-        // Different email should work
+    /**
+     * @test
+     */
+    public function different_email_validation_works()
+    {
+        $user = $this->createUser(['email' => 'test@example.com']);
+        $service = new EmailChangeService;
+
+        // Different email should work (no exception thrown)
         $this->assertTrue($service->validateEmailChange($user, 'different@example.com'));
     }
 

@@ -45,8 +45,8 @@ class EmailChangeController extends Controller
         } catch (Exception $e) {
             // Log the full error for debugging
             Log::error('Email change confirmation failed', [
-                'user_id' => $request->user()->id,
-                'email_change_id' => $request->route('email_change'),
+                'user_id' => $emailChange ? $emailChange->user_id : 'unknown',
+                'email_change_id' => $request->query('email_change'),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -80,8 +80,8 @@ class EmailChangeController extends Controller
         } catch (Exception $e) {
             // Log the full error for debugging
             Log::error('Email change denial failed', [
-                'user_id' => $request->user()->id,
-                'email_change_id' => $request->route('email_change'),
+                'user_id' => $emailChange ? $emailChange->user_id : 'unknown',
+                'email_change_id' => $request->query('email_change'),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -106,11 +106,11 @@ class EmailChangeController extends Controller
         $user = $request->user();
         $newEmail = $request->input('email');
 
-        if (! $this->emailChangeService->validateEmailChange($user, $newEmail)) {
-            return back()->withErrors(['email' => 'Invalid email change request.']);
-        }
-
         try {
+            // Validate the email change request
+            $this->emailChangeService->validateEmailChange($user, $newEmail);
+
+            // If validation passes, request the email change
             $this->emailChangeService->requestEmailChange($user, $newEmail);
 
             return back()->with(
@@ -118,7 +118,28 @@ class EmailChangeController extends Controller
                 'Email change request submitted. Please check your current email for confirmation instructions.',
             );
         } catch (Exception $e) {
-            // Log the full error for debugging
+            // Check if this is a validation error (user-friendly message)
+            $validationErrors = [
+                'The new email address must be different',
+                'You already have',
+                'This email domain is not allowed',
+                'You have reached the maximum',
+            ];
+
+            $isValidationError = false;
+            foreach ($validationErrors as $pattern) {
+                if (strpos($e->getMessage(), $pattern) !== false) {
+                    $isValidationError = true;
+                    break;
+                }
+            }
+
+            if ($isValidationError) {
+                // Return user-friendly validation error
+                return back()->withErrors(['email' => $e->getMessage()]);
+            }
+
+            // Log the full error for debugging (system errors)
             Log::error('Email change request failed', [
                 'user_id' => $user->id,
                 'new_email' => $newEmail,
@@ -164,23 +185,16 @@ class EmailChangeController extends Controller
     }
 
     /**
-     * Get pending email changes for the authenticated user.
-     */
-    public function getPending(Request $request)
-    {
-        $user = $request->user();
-
-        return $this->emailChangeService->getPendingEmailChanges($user);
-    }
-
-    /**
      * Find the email change record from the request.
      */
     protected function findEmailChange(EmailChangeRequest $request): ?EmailChange
     {
         $emailChangeModel = config('email-change-confirmation.email_change_model');
 
-        return $emailChangeModel::find($request->route('email_change'));
+        // The email_change ID comes from the query string in signed URLs
+        $emailChangeId = $request->query('email_change');
+
+        return $emailChangeModel::find($emailChangeId);
     }
 
     /**

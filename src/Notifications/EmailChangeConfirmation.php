@@ -7,6 +7,7 @@ namespace MilenMk\LaravelEmailChangeConfirmation\Notifications;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\HtmlString;
@@ -15,8 +16,11 @@ use MilenMk\LaravelEmailChangeConfirmation\Models\EmailChange;
 class EmailChangeConfirmation extends Notification
 {
     protected EmailChange $emailChange;
+
     protected string $username;
+
     protected string $oldEmail;
+
     protected string $newEmail;
 
     public function __construct(EmailChange $emailChange)
@@ -47,33 +51,55 @@ class EmailChangeConfirmation extends Notification
     }
 
     /**
+     * Get user display name.
+     */
+    protected function getUserDisplayName($user): string
+    {
+        // Try different common name attributes
+        if (isset($user->full_name)) {
+            return $user->full_name;
+        }
+
+        if (isset($user->name) && isset($user->last_name)) {
+            return $user->name . ' ' . $user->last_name;
+        }
+
+        if (isset($user->first_name) && isset($user->last_name)) {
+            return $user->first_name . ' ' . $user->last_name;
+        }
+
+        if (isset($user->name)) {
+            return $user->name;
+        }
+
+        if (isset($user->first_name)) {
+            return $user->first_name;
+        }
+
+        // Fallback to email
+        return $user->email;
+    }
+
+    /**
      * Get the confirmation URL.
      */
     protected function confirmUrl(mixed $notifiable): string
     {
-        $expireMinutes = config('email-change-confirmation.confirmation_email_expire_minutes', 60);
+        //        $expireMinutes = config('email-change-confirmation.confirmation_email_expire_minutes', 60);
+        //
+        //        return URL::temporarySignedRoute(
+        //            'email-change-confirmation.confirm',
+        //            Carbon::now()->addMinutes($expireMinutes),
+        //            [
+        //                'id' => $notifiable->getKey(),
+        //                'hash' => $this->generateHash($this->oldEmail),
+        //                'email_change' => $this->emailChange->getKey(),
+        //            ],
+        //        );
 
         return URL::temporarySignedRoute(
             'email-change-confirmation.confirm',
-            Carbon::now()->addMinutes($expireMinutes),
-            [
-                'id' => $notifiable->getKey(),
-                'hash' => $this->generateHash($this->oldEmail),
-                'email_change' => $this->emailChange->getKey(),
-            ],
-        );
-    }
-
-    /**
-     * Get the denial URL.
-     */
-    protected function denyUrl(mixed $notifiable): string
-    {
-        $expireMinutes = config('email-change-confirmation.confirmation_email_expire_minutes', 60);
-
-        return URL::temporarySignedRoute(
-            'email-change-confirmation.deny',
-            Carbon::now()->addMinutes($expireMinutes),
+            Carbon::now()->addMinutes(Config::get('email-change-confirmation.confirmation_email_expire_minutes', 60)),
             [
                 'id' => $notifiable->getKey(),
                 'hash' => $this->generateHash($this->oldEmail),
@@ -103,6 +129,34 @@ class EmailChangeConfirmation extends Notification
     }
 
     /**
+     * Get the denial URL.
+     */
+    protected function denyUrl(mixed $notifiable): string
+    {
+        //        $expireMinutes = config('email-change-confirmation.confirmation_email_expire_minutes', 60);
+        //
+        //        return URL::temporarySignedRoute(
+        //            'email-change-confirmation.deny',
+        //            Carbon::now()->addMinutes($expireMinutes),
+        //            [
+        //                'id' => $notifiable->getKey(),
+        //                'hash' => $this->generateHash($this->oldEmail),
+        //                'email_change' => $this->emailChange->getKey(),
+        //            ],
+        //        );
+
+        return URL::temporarySignedRoute(
+            'email-change-confirmation.deny',
+            Carbon::now()->addMinutes(Config::get('email-change-confirmation.confirmation_email_expire_minutes', 60)),
+            [
+                'id' => $notifiable->getKey(),
+                'hash' => $this->generateHash($this->oldEmail),
+                'email_change' => $this->emailChange->getKey(),
+            ],
+        );
+    }
+
+    /**
      * Build the mail message.
      */
     protected function buildMailMessage(string $confirmUrl, string $denyUrl): MailMessage
@@ -110,18 +164,30 @@ class EmailChangeConfirmation extends Notification
         $mailMessage = (new MailMessage)
             ->greeting(__('Hello :user', ['user' => $this->username]))
             ->subject(__('Email Change Request Confirmation'))
-            ->line(__('A request to change your account email address to **:new_email** has been made.', [
-                'new_email' => $this->newEmail,
-            ]))
+            ->line(
+                __('Blas bla A request to change your account email address to **:new_email** has been made.', [
+                    'new_email' => $this->newEmail,
+                ]),
+            )
             ->line(__('If the request is genuine, please click the confirmation button below to confirm the change.'))
             ->action(__('Confirm Email Change'), $confirmUrl)
             ->success();
 
         // Add security warning and deny button
         $mailMessage
-            ->line(__('If you did not request this change, it is possible that your account has been compromised. Please click the button below to deny this request and secure your account.'))
+            ->line(
+                __(
+                    'If you did not request this change, it is possible that your account has been compromised. Please click the button below to deny this request and secure your account.',
+                ),
+            )
             ->line($this->buildDenyButton($denyUrl))
-            ->line(new HtmlString(__('If you\'re having trouble clicking the buttons, copy and paste the URLs below into your web browser:')))
+            ->line(
+                new HtmlString(
+                    __(
+                        'If you\'re having trouble clicking the buttons, copy and paste the URLs below into your web browser:',
+                    ),
+                ),
+            )
             ->line(__('Confirm: :url', ['url' => $confirmUrl]))
             ->line(__('Deny: :url', ['url' => $denyUrl]));
 
@@ -151,7 +217,11 @@ class EmailChangeConfirmation extends Notification
                                     <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif, \'Apple Color Emoji\', \'Segoe UI Emoji\', \'Segoe UI Symbol\'; position: relative;">
                                         <tr>
                                             <td style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif, \'Apple Color Emoji\', \'Segoe UI Emoji\', \'Segoe UI Symbol\'; position: relative;">
-                                                <a href="' . $denyUrl . '" class="button button-red" target="_blank" rel="noopener" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif, \'Apple Color Emoji\', \'Segoe UI Emoji\', \'Segoe UI Symbol\'; position: relative; -webkit-text-size-adjust: none; border-radius: 4px; color: #fff; display: inline-block; overflow: hidden; text-decoration: none; background-color: #dc3545; border-bottom: 8px solid #dc3545; border-left: 18px solid #dc3545; border-right: 18px solid #dc3545; border-top: 8px solid #dc3545;">' . __('DENY REQUEST') . '</a>
+                                                <a href="' .
+                $denyUrl .
+                '" class="button button-red" target="_blank" rel="noopener" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif, \'Apple Color Emoji\', \'Segoe UI Emoji\', \'Segoe UI Symbol\'; position: relative; -webkit-text-size-adjust: none; border-radius: 4px; color: #fff; display: inline-block; overflow: hidden; text-decoration: none; background-color: #dc3545; border-bottom: 8px solid #dc3545; border-left: 18px solid #dc3545; border-right: 18px solid #dc3545; border-top: 8px solid #dc3545;">' .
+                __('DENY REQUEST') .
+                '</a>
                                             </td>
                                         </tr>
                                     </table>
@@ -160,37 +230,7 @@ class EmailChangeConfirmation extends Notification
                         </table>
                     </td>
                 </tr>
-            </table>'
+            </table>',
         );
-    }
-
-    /**
-     * Get user display name.
-     */
-    protected function getUserDisplayName($user): string
-    {
-        // Try different common name attributes
-        if (isset($user->full_name)) {
-            return $user->full_name;
-        }
-
-        if (isset($user->name) && isset($user->last_name)) {
-            return $user->name . ' ' . $user->last_name;
-        }
-
-        if (isset($user->first_name) && isset($user->last_name)) {
-            return $user->first_name . ' ' . $user->last_name;
-        }
-
-        if (isset($user->name)) {
-            return $user->name;
-        }
-
-        if (isset($user->first_name)) {
-            return $user->first_name;
-        }
-
-        // Fallback to email
-        return $user->email;
     }
 }
