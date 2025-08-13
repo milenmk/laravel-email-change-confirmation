@@ -2,14 +2,20 @@
 
 namespace MilenMk\LaravelEmailChangeConfirmation\Tests;
 
+use Exception;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\URL;
+use MilenMk\LaravelEmailChangeConfirmation\EmailChangeConfirmationServiceProvider;
 use MilenMk\LaravelEmailChangeConfirmation\Models\EmailChange;
 use MilenMk\LaravelEmailChangeConfirmation\Services\EmailChangeService;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Log;
+use ReflectionClass;
 
 class SecurityTest extends TestCase
 {
-    public function testCannotConfirmWithInvalidHash()
+    /**
+     * @test
+     */
+    public function cannot_confirm_with_invalid_hash()
     {
         $user = $this->createUser();
         $emailChange = EmailChange::create([
@@ -19,15 +25,11 @@ class SecurityTest extends TestCase
         ]);
 
         // Create a signed URL with invalid hash
-        $url = \URL::temporarySignedRoute(
-            'email-change-confirmation.confirm',
-            now()->addHour(),
-            [
-                'id' => $user->id,
-                'hash' => 'invalid-hash', // Invalid hash
-                'email_change' => $emailChange->id,
-            ]
-        );
+        $url = URL::temporarySignedRoute('email-change-confirmation.confirm', now()->addHour(), [
+            'id' => $user->id,
+            'hash' => 'invalid-hash', // Invalid hash
+            'email_change' => $emailChange->id,
+        ]);
 
         $response = $this->actingAs($user)->get($url);
         // The request will be rejected by the EmailChangeRequest authorization
@@ -35,11 +37,14 @@ class SecurityTest extends TestCase
         $this->assertContains($response->getStatusCode(), [403, 404]);
     }
 
-    public function testCannotConfirmForDifferentUser()
+    /**
+     * @test
+     */
+    public function cannot_confirm_for_different_user()
     {
         $user1 = $this->createUser(['email' => 'user1@example.com']);
         $user2 = $this->createUser(['email' => 'user2@example.com']);
-        
+
         $emailChange = EmailChange::create([
             'user_id' => $user1->id,
             'current_email' => $user1->email,
@@ -47,41 +52,43 @@ class SecurityTest extends TestCase
         ]);
 
         // Create a signed URL for user1 but try to access as user2
-        $url = \URL::temporarySignedRoute(
-            'email-change-confirmation.confirm',
-            now()->addHour(),
-            [
-                'id' => $user1->id, // Different user ID
-                'hash' => hash('sha256', $user1->email),
-                'email_change' => $emailChange->id,
-            ]
-        );
+        $url = URL::temporarySignedRoute('email-change-confirmation.confirm', now()->addHour(), [
+            'id' => $user1->id, // Different user ID
+            'hash' => hash('sha256', $user1->email),
+            'email_change' => $emailChange->id,
+        ]);
 
         $response = $this->actingAs($user2)->get($url);
         $response->assertStatus(403);
     }
 
-    public function testBlockedDomainsAreRejected()
+    /**
+     * @test
+     */
+    public function blocked_domains_are_rejected()
     {
         Config::set('email-change-confirmation.blocked_domains', ['tempmail.com', 'spam.com']);
-        
+
         $user = $this->createUser();
-        $service = new EmailChangeService();
+        $service = new EmailChangeService;
 
         // Test blocked domain
         $this->assertFalse($service->validateEmailChange($user, 'test@tempmail.com'));
         $this->assertFalse($service->validateEmailChange($user, 'test@SPAM.COM')); // Case insensitive
-        
+
         // Test allowed domain
         $this->assertTrue($service->validateEmailChange($user, 'test@gmail.com'));
     }
 
-    public function testRateLimitingWorks()
+    /**
+     * @test
+     */
+    public function rate_limiting_works()
     {
         Config::set('email-change-confirmation.max_requests_per_hour', 2);
-        
+
         $user = $this->createUser();
-        $service = new EmailChangeService();
+        $service = new EmailChangeService;
 
         // Create first email change to simulate a request
         EmailChange::create([
@@ -103,20 +110,26 @@ class SecurityTest extends TestCase
         $this->assertFalse($service->validateEmailChange($user, 'test3@example.com'));
     }
 
-    public function testHmacHashingWhenSecretConfigured()
+    /**
+     * @test
+     */
+    public function hmac_hashing_when_secret_configured()
     {
         Config::set('email-change-confirmation.hash_secret', 'test-secret-key');
         Config::set('email-change-confirmation.max_pending_changes_per_user', 5); // Allow multiple
-        
+
         $user = $this->createUser();
-        $service = new EmailChangeService();
-        
+        $service = new EmailChangeService;
+
         // Request should work with HMAC hashing
         $result = $service->requestEmailChange($user, 'test@example.com');
         $this->assertInstanceOf(EmailChange::class, $result);
     }
 
-    public function testCannotReuseConfirmedEmailChange()
+    /**
+     * @test
+     */
+    public function cannot_reuse_confirmed_email_change()
     {
         $user = $this->createUser();
         $emailChange = EmailChange::create([
@@ -128,14 +141,17 @@ class SecurityTest extends TestCase
         // Confirm the email change
         $emailChange->confirm();
 
-        $service = new EmailChangeService();
-        
+        $service = new EmailChangeService;
+
         // Trying to confirm again should fail
         $result = $service->confirmEmailChange($emailChange);
         $this->assertFalse($result);
     }
 
-    public function testCannotReuseDeniedEmailChange()
+    /**
+     * @test
+     */
+    public function cannot_reuse_denied_email_change()
     {
         $user = $this->createUser();
         $emailChange = EmailChange::create([
@@ -147,31 +163,37 @@ class SecurityTest extends TestCase
         // Deny the email change
         $emailChange->deny();
 
-        $service = new EmailChangeService();
-        
+        $service = new EmailChangeService;
+
         // Trying to confirm denied change should fail
         $result = $service->confirmEmailChange($emailChange);
         $this->assertFalse($result);
     }
 
-    public function testSameEmailValidationWorks()
+    /**
+     * @test
+     */
+    public function same_email_validation_works()
     {
         $user = $this->createUser(['email' => 'test@example.com']);
-        $service = new EmailChangeService();
+        $service = new EmailChangeService;
 
         // Trying to change to same email should fail
         $this->assertFalse($service->validateEmailChange($user, 'test@example.com'));
-        
+
         // Different email should work
         $this->assertTrue($service->validateEmailChange($user, 'different@example.com'));
     }
 
-    public function testMaxPendingChangesLimit()
+    /**
+     * @test
+     */
+    public function max_pending_changes_limit()
     {
         Config::set('email-change-confirmation.max_pending_changes_per_user', 1);
-        
+
         $user = $this->createUser();
-        
+
         // Create first pending change
         EmailChange::create([
             'user_id' => $user->id,
@@ -179,54 +201,68 @@ class SecurityTest extends TestCase
             'new_email' => 'test1@example.com',
         ]);
 
-        $service = new EmailChangeService();
-        
+        $service = new EmailChangeService;
+
         // Should not be able to create another pending change
-        $this->expectException(\Exception::class);
+        $this->expectException(Exception::class);
         $this->expectExceptionMessage('User has reached the maximum number of pending email changes');
-        
+
         $service->requestEmailChange($user, 'test2@example.com');
     }
 
-    public function testHashSecretValidation()
+    /**
+     * @test
+     */
+    public function hash_secret_validation()
     {
         Config::set('email-change-confirmation.max_pending_changes_per_user', 10); // Allow multiple
-        
+
         // Test with no secret
         Config::set('email-change-confirmation.hash_secret', null);
         $user = $this->createUser();
-        $service = new EmailChangeService();
-        
+        $service = new EmailChangeService;
+
         // Should still work but use weak hashing
         $result = $service->requestEmailChange($user, 'test@example.com');
         $this->assertInstanceOf(EmailChange::class, $result);
-        
+
         // Test with short secret (should work but log warning)
         Config::set('email-change-confirmation.hash_secret', 'short');
         $result2 = $service->requestEmailChange($user, 'test2@example.com');
         $this->assertInstanceOf(EmailChange::class, $result2);
-        
+
         // Test with good secret
-        Config::set('email-change-confirmation.hash_secret', 'this-is-a-very-secure-32-character-secret-key-for-testing');
+        Config::set(
+            'email-change-confirmation.hash_secret',
+            'this-is-a-very-secure-32-character-secret-key-for-testing',
+        );
         $result3 = $service->requestEmailChange($user, 'test3@example.com');
         $this->assertInstanceOf(EmailChange::class, $result3);
     }
 
-    public function testHashSecretStrengthValidation()
+    /**
+     * @test
+     */
+    public function hash_secret_strength_validation()
     {
-        $serviceProvider = new \MilenMk\LaravelEmailChangeConfirmation\EmailChangeConfirmationServiceProvider(app());
-        $reflection = new \ReflectionClass($serviceProvider);
+        $serviceProvider = new EmailChangeConfirmationServiceProvider(app());
+        $reflection = new ReflectionClass($serviceProvider);
         $method = $reflection->getMethod('isWeakHashSecret');
         $method->setAccessible(true);
-        
+
         // Test weak secrets
         $this->assertTrue($method->invoke($serviceProvider, 'secret123'));
         $this->assertTrue($method->invoke($serviceProvider, 'password'));
         $this->assertTrue($method->invoke($serviceProvider, 'test_key'));
         $this->assertTrue($method->invoke($serviceProvider, 'aaaaaaaaaa')); // Repeated chars
-        
+
         // Test strong secrets
-        $this->assertFalse($method->invoke($serviceProvider, 'YWJjZGVmZ2hpams1bG1ub3BxcnN0dXZ3eHl6QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo='));
+        $this->assertFalse(
+            $method->invoke(
+                $serviceProvider,
+                'YWJjZGVmZ2hpams1bG1ub3BxcnN0dXZ3eHl6QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo=',
+            ),
+        );
         $this->assertFalse($method->invoke($serviceProvider, 'random-string-with-good-entropy-2024-xyz'));
     }
 }

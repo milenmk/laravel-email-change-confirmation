@@ -6,23 +6,27 @@ use Illuminate\Support\Facades\Notification;
 use MilenMk\LaravelEmailChangeConfirmation\Models\EmailChange;
 use MilenMk\LaravelEmailChangeConfirmation\Notifications\EmailChangeConfirmation;
 use MilenMk\LaravelEmailChangeConfirmation\Services\EmailChangeService;
+
 class EmailChangeServiceTest extends TestCase
 {
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         Notification::fake();
     }
 
-    public function testCanRequestEmailChange()
+    /**
+     * @test
+     */
+    public function can_request_email_change()
     {
         $user = $this->createUser([
             'name' => 'John Doe',
             'email' => 'john@example.com',
         ]);
 
-        $service = new EmailChangeService();
+        $service = new EmailChangeService;
         $emailChange = $service->requestEmailChange($user, 'newemail@example.com');
 
         $this->assertInstanceOf(EmailChange::class, $emailChange);
@@ -35,7 +39,10 @@ class EmailChangeServiceTest extends TestCase
         Notification::assertSentTo($user, EmailChangeConfirmation::class);
     }
 
-    public function testCanConfirmEmailChange()
+    /**
+     * @test
+     */
+    public function can_confirm_email_change()
     {
         $user = $this->createUser([
             'name' => 'John Doe',
@@ -48,17 +55,20 @@ class EmailChangeServiceTest extends TestCase
             'new_email' => 'newemail@example.com',
         ]);
 
-        $service = new EmailChangeService();
+        $service = new EmailChangeService;
         $result = $service->confirmEmailChange($emailChange);
 
         $this->assertTrue($result);
         $this->assertTrue($emailChange->fresh()->isConfirmed());
-        
+
         // Check that user's email was updated
         $this->assertEquals('newemail@example.com', $user->fresh()->email);
     }
 
-    public function testCanDenyEmailChange()
+    /**
+     * @test
+     */
+    public function can_deny_email_change()
     {
         $user = $this->createUser([
             'name' => 'John Doe',
@@ -71,24 +81,27 @@ class EmailChangeServiceTest extends TestCase
             'new_email' => 'newemail@example.com',
         ]);
 
-        $service = new EmailChangeService();
+        $service = new EmailChangeService;
         $result = $service->denyEmailChange($emailChange);
 
         $this->assertTrue($result);
         $this->assertTrue($emailChange->fresh()->isDenied());
-        
+
         // Check that user's email was NOT updated
         $this->assertEquals('john@example.com', $user->fresh()->email);
     }
 
-    public function testValidatesEmailChangeCorrectly()
+    /**
+     * @test
+     */
+    public function validates_email_change_correctly()
     {
         $user = $this->createUser([
             'name' => 'John Doe',
             'email' => 'john@example.com',
         ]);
 
-        $service = new EmailChangeService();
+        $service = new EmailChangeService;
 
         // Same email should be invalid
         $this->assertFalse($service->validateEmailChange($user, 'john@example.com'));
@@ -97,7 +110,10 @@ class EmailChangeServiceTest extends TestCase
         $this->assertTrue($service->validateEmailChange($user, 'newemail@example.com'));
     }
 
-    public function testCanGetPendingEmailChanges()
+    /**
+     * @test
+     */
+    public function can_get_pending_email_changes()
     {
         $user = $this->createUser([
             'name' => 'John Doe',
@@ -119,14 +135,17 @@ class EmailChangeServiceTest extends TestCase
             'change_confirmed_at' => now(),
         ]);
 
-        $service = new EmailChangeService();
+        $service = new EmailChangeService;
         $pendingChanges = $service->getPendingEmailChanges($user);
 
         $this->assertCount(1, $pendingChanges);
         $this->assertEquals('newemail@example.com', $pendingChanges->first()->new_email);
     }
 
-    public function testCanCancelPendingEmailChanges()
+    /**
+     * @test
+     */
+    public function can_cancel_pending_email_changes()
     {
         $user = $this->createUser([
             'name' => 'John Doe',
@@ -146,7 +165,7 @@ class EmailChangeServiceTest extends TestCase
             'new_email' => 'newemail2@example.com',
         ]);
 
-        $service = new EmailChangeService();
+        $service = new EmailChangeService;
         $cancelled = $service->cancelPendingEmailChanges($user);
 
         $this->assertEquals(2, $cancelled);

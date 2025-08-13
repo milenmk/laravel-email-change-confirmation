@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace MilenMk\LaravelEmailChangeConfirmation\Observers;
 
+use Exception;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 use MilenMk\LaravelEmailChangeConfirmation\Services\EmailChangeService;
 
 class UserObserver
@@ -35,9 +37,9 @@ class UserObserver
                 // Request email change confirmation instead
                 try {
                     $this->emailChangeService->requestEmailChange($user, $newEmail);
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     // Log the error but don't throw to prevent breaking the update
-                    \Illuminate\Support\Facades\Log::error('Failed to request email change: ' . $e->getMessage(), [
+                    Log::error('Failed to request email change: ' . $e->getMessage(), [
                         'user_id' => $user->getKey(),
                         'original_email' => $originalEmail,
                         'new_email' => $newEmail,

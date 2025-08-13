@@ -6,10 +6,13 @@ use MilenMk\LaravelEmailChangeConfirmation\Models\EmailChange;
 
 class EmailChangeModelTest extends TestCase
 {
-    public function testCanCreateEmailChangeRecord()
+    /**
+     * @test
+     */
+    public function can_create_email_change_record()
     {
         $user = $this->createUser();
-        
+
         $emailChange = EmailChange::create([
             'user_id' => $user->id,
             'current_email' => 'old@example.com',
@@ -23,10 +26,13 @@ class EmailChangeModelTest extends TestCase
         $this->assertTrue($emailChange->isPending());
     }
 
-    public function testCanConfirmEmailChange()
+    /**
+     * @test
+     */
+    public function can_confirm_email_change()
     {
         $user = $this->createUser();
-        
+
         $emailChange = EmailChange::create([
             'user_id' => $user->id,
             'current_email' => 'old@example.com',
@@ -41,10 +47,13 @@ class EmailChangeModelTest extends TestCase
         $this->assertNotNull($emailChange->change_confirmed_at);
     }
 
-    public function testCanDenyEmailChange()
+    /**
+     * @test
+     */
+    public function can_deny_email_change()
     {
         $user = $this->createUser();
-        
+
         $emailChange = EmailChange::create([
             'user_id' => $user->id,
             'current_email' => 'old@example.com',
@@ -59,10 +68,13 @@ class EmailChangeModelTest extends TestCase
         $this->assertNotNull($emailChange->change_denied_at);
     }
 
-    public function testHasUserRelationship()
+    /**
+     * @test
+     */
+    public function has_user_relationship()
     {
         $user = $this->createUser(['name' => 'John Doe']);
-        
+
         $emailChange = EmailChange::create([
             'user_id' => $user->id,
             'current_email' => 'old@example.com',
@@ -72,10 +84,13 @@ class EmailChangeModelTest extends TestCase
         $this->assertEquals('John Doe', $emailChange->user->name);
     }
 
-    public function testCanScopePendingChanges()
+    /**
+     * @test
+     */
+    public function can_scope_pending_changes()
     {
         $user = $this->createUser();
-        
+
         // Create pending change
         EmailChange::create([
             'user_id' => $user->id,
@@ -106,7 +121,7 @@ class EmailChangeModelTest extends TestCase
         $this->assertCount(1, $pendingChanges);
         $this->assertCount(1, $confirmedChanges);
         $this->assertCount(1, $deniedChanges);
-        
+
         $this->assertEquals('pending@example.com', $pendingChanges->first()->new_email);
         $this->assertEquals('confirmed@example.com', $confirmedChanges->first()->new_email);
         $this->assertEquals('denied@example.com', $deniedChanges->first()->new_email);

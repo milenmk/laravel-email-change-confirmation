@@ -15,6 +15,12 @@ A Laravel package that provides secure email change confirmation functionality. 
 
 ## Installation
 
+### Requirements
+
+- PHP 8.3 or higher
+- Laravel 10.0, 11.0, or 12.0
+- User model must use the `Notifiable` trait
+
 Install the package via Composer:
 
 ```bash
@@ -62,7 +68,7 @@ use MilenMk\LaravelEmailChangeConfirmation\Traits\HasEmailChangeConfirmation;
 class User extends Authenticatable
 {
     use HasEmailChangeConfirmation;
-    
+
     // ... rest of your model
 }
 ```
@@ -83,7 +89,7 @@ use MilenMk\LaravelEmailChangeConfirmation\Traits\HasEmailChangeConfirmation;
 class User extends Authenticatable
 {
     use Notifiable, HasEmailChangeConfirmation;
-    
+
     // ... rest of your model
 }
 ```
@@ -146,15 +152,15 @@ class ProfileController extends Controller
     public function updateEmail(Request $request, EmailChangeService $emailChangeService)
     {
         $request->validate(['email' => 'required|email']);
-        
+
         $user = auth()->user();
         $newEmail = $request->input('email');
-        
+
         if ($emailChangeService->validateEmailChange($user, $newEmail)) {
             $emailChangeService->requestEmailChange($user, $newEmail);
             return back()->with('success', 'Email change confirmation sent!');
         }
-        
+
         return back()->withErrors(['email' => 'Invalid email change request.']);
     }
 }
@@ -174,17 +180,19 @@ use Livewire\Component;
 class UpdateProfile extends Component
 {
     public $email;
-    
+
     public function updateEmail()
     {
         $this->validate(['email' => 'required|email']);
-        
-        auth()->user()->update(['email' => $this->email]);
-        
+
+        auth()
+            ->user()
+            ->update(['email' => $this->email]);
+
         // The package automatically handles the rest and dispatches
         // a browser event for UI feedback
     }
-    
+
     public function render()
     {
         return view('livewire.update-profile');
@@ -195,13 +203,14 @@ class UpdateProfile extends Component
 In your Blade template:
 
 ```blade
-<div x-data="{ showNotification: false }" 
-     @email-change-notification.window="showNotification = true; setTimeout(() => showNotification = false, 5000)">
-    
+<div
+    x-data="{ showNotification: false }"
+    @email-change-notification.window="showNotification = true; setTimeout(() => showNotification = false, 5000)"
+>
     <div x-show="showNotification" class="alert alert-info">
         Email change confirmation sent! Check your current email address.
     </div>
-    
+
     <!-- Your form here -->
 </div>
 ```
@@ -216,39 +225,39 @@ The package is highly configurable. Here are the key configuration options:
 return [
     // User model to use
     'user_model' => App\Models\User::class,
-    
+
     // Auto-detect email changes (recommended)
     'auto_detect_email_changes' => true,
-    
+
     // Route configuration
     'route_prefix' => 'email-change',
     'middleware' => ['web', 'auth', 'signed'],
-    
+
     // Email settings
     'confirmation_email_expire_minutes' => 60,
     'from_email' => null,
     'from_name' => null,
-    
+
     // Notification settings
     'send_notification_to_user' => true,
     'notification_message' => 'Email change confirmation sent...',
-    
+
     // Email verification integration
     'auto_send_email_verification' => true,
-    
+
     // Security settings
     'hash_algorithm' => 'sha256',
     'hash_secret' => env('EMAIL_CHANGE_HASH_SECRET'),
     'max_pending_changes_per_user' => 1,
     'max_requests_per_hour' => 5,
     'blocked_domains' => [],
-    
+
     // Customization - override these classes
     'email_change_model' => MilenMk\LaravelEmailChangeConfirmation\Models\EmailChange::class,
     'email_change_controller' => MilenMk\LaravelEmailChangeConfirmation\Controllers\EmailChangeController::class,
     'email_change_notification' => MilenMk\LaravelEmailChangeConfirmation\Notifications\EmailChangeConfirmation::class,
     'email_change_service' => MilenMk\LaravelEmailChangeConfirmation\Services\EmailChangeService::class,
-    
+
     // Livewire integration
     'livewire_enabled' => true,
     'livewire_notification_event' => 'email-change-notification',
@@ -275,20 +284,20 @@ class CustomEmailChangeController extends BaseController
     protected function handleSuccessfulConfirmation(EmailChange $emailChange): RedirectResponse
     {
         // Custom logic after successful confirmation
-        
+
         // Log the email change
         \Log::info('Email changed', [
             'user_id' => $emailChange->user_id,
             'old_email' => $emailChange->current_email,
             'new_email' => $emailChange->new_email,
         ]);
-        
+
         // Send custom notification
         $emailChange->user->notify(new \App\Notifications\EmailChangedNotification());
-        
+
         return parent::handleSuccessfulConfirmation($emailChange);
     }
-    
+
     protected function getSuccessRedirect(): RedirectResponse
     {
         // Custom redirect logic
@@ -320,7 +329,7 @@ class CustomEmailChangeNotification extends BaseNotification
 {
     protected function buildMailMessage(string $confirmUrl, string $denyUrl): MailMessage
     {
-        return (new MailMessage)
+        return (new MailMessage())
             ->subject('Confirm Your Email Change - ' . config('app.name'))
             ->greeting('Hello ' . $this->username . '!')
             ->line('We received a request to change your email address.')
@@ -328,7 +337,11 @@ class CustomEmailChangeNotification extends BaseNotification
             ->action('Confirm Email Change', $confirmUrl)
             ->line('If you did not request this change, please click the deny button below.')
             ->action('Deny Request', $denyUrl)
-            ->line('This link will expire in ' . config('email-change-confirmation.confirmation_email_expire_minutes') . ' minutes.');
+            ->line(
+                'This link will expire in ' .
+                    config('email-change-confirmation.confirmation_email_expire_minutes') .
+                    ' minutes.',
+            );
     }
 }
 ```
@@ -353,21 +366,21 @@ class CustomEmailChangeService extends BaseService
         if ($this->isEmailBlacklisted($newEmail)) {
             throw new \Exception('This email domain is not allowed.');
         }
-        
+
         // Custom rate limiting
         if ($this->hasRecentEmailChangeAttempt($user)) {
             throw new \Exception('Please wait before requesting another email change.');
         }
-        
+
         return parent::requestEmailChange($user, $newEmail);
     }
-    
+
     private function isEmailBlacklisted(string $email): bool
     {
         // Your custom logic
         return false;
     }
-    
+
     private function hasRecentEmailChangeAttempt(Model $user): bool
     {
         // Your custom logic
@@ -393,8 +406,6 @@ The package integrates seamlessly with Fortify's profile update actions.
 ### Custom Applications
 
 The package is designed to work with any Laravel application structure. Use manual integration if auto-detection doesn't work for your setup.
-
-## API Reference
 
 ### Trait Methods
 
@@ -462,54 +473,121 @@ $emailChange->deny(): bool
 The package includes several security features that can be configured:
 
 #### Hash Secret (Recommended)
+
 Set `EMAIL_CHANGE_HASH_SECRET` in your `.env` file for enhanced security:
+
 - **Minimum length**: 16 characters (32+ recommended)
 - **Maximum length**: No limit (but 64 characters is sufficient)
 - **Allowed characters**: Any printable ASCII characters, base64-encoded strings recommended
 - **Generation**: Use `php -r "echo base64_encode(random_bytes(32));"` for a secure 44-character base64 string
 
 #### Rate Limiting
+
 - `max_requests_per_hour`: Limit email change requests per user (default: 5)
 - Route-level throttling: Additional protection at the HTTP level
 
 #### Domain Blocking
+
 - `blocked_domains`: Array of domains to block (e.g., temporary email services)
 - Case-insensitive matching
 
 #### Expiration Settings
+
 - `confirmation_email_expire_minutes`: How long confirmation links remain valid (default: 60, recommended: 30 or less)
 
-## Examples
+## Verification Steps
 
-The `examples/` directory contains reference code and integration patterns to help you implement the package in your application. **These files are for educational purposes and should not be used directly.**
+After installation, verify everything is working:
 
-### What's Included:
-- **`UserModel.php`** - Shows how to add the trait to your User model
-- **`LivewireComponent.php`** - Demonstrates Livewire integration patterns
-- **`ControllerExample.php`** - Manual integration in traditional controllers
-- **`CustomController.php`** - How to extend the package's controller
-- **`CustomNotification.php`** - Creating custom email notifications
-- **`BladeTemplates.blade.php`** - UI examples for forms and status displays
+### 1. Check Database Tables
 
-### How to Use Examples:
-1. **Copy relevant code** into your application files
-2. **Modify to fit** your specific requirements
-3. **Use as reference** when implementing similar functionality
-4. **Learn the patterns** and apply them to your codebase
+Ensure the `email_changes` table was created:
 
-⚠️ **Important:** Examples are templates and learning materials - copy and adapt the code rather than using files directly.
-
-## Requirements
-
-- PHP 8.1 or higher
-- Laravel 10.0, 11.0, or 12.0
-- User model must use the `Notifiable` trait
-
-## Testing
-
-```bash
-composer test
+```sql
+DESCRIBE email_changes;
 ```
+
+### 2. Test Email Change
+
+1. Log into your application
+2. Try to change your email address
+3. Check that:
+    - The email in the database doesn't change immediately
+    - You receive a confirmation email at your current address
+    - The email contains confirm and deny buttons
+
+### 3. Test Confirmation Flow
+
+1. Click the "Confirm" button in the email
+2. Verify that:
+    - Your email address is updated in the database
+    - If you implement `MustVerifyEmail`, you receive a verification email at the new address
+    - You're redirected to the appropriate page
+
+### 4. Test Denial Flow
+
+1. Request another email change
+2. Click the "Deny" button in the email
+3. Verify that:
+    - The email change is marked as denied
+    - Your original email address remains unchanged
+    - You're redirected to the appropriate page
+
+## Troubleshooting
+
+### Issue: Emails Not Sending
+
+**Solution:**
+
+1. Check your mail configuration in `.env`
+2. Test mail sending with `php artisan tinker`:
+    ```php
+    Mail::raw('Test email', function ($message) {
+        $message->to('test@example.com')->subject('Test');
+    });
+    ```
+3. Check your application logs for mail errors
+
+### Issue: User Model Doesn't Have Notifiable Trait
+
+**Error:** `User model must use the Notifiable trait`
+
+**Solution:**
+Add the `Notifiable` trait to your User model:
+
+```php
+use Illuminate\Notifications\Notifiable;
+
+class User extends Authenticatable
+{
+    use Notifiable;
+    // ...
+}
+```
+
+### Issue: Auto-Detection Not Working
+
+**Solution:**
+
+1. Ensure the `HasEmailChangeConfirmation` trait is added to your User model
+2. Check that `auto_detect_email_changes` is `true` in config
+3. If still not working, try manual integration
+
+### Issue: Routes Not Working
+
+**Solution:**
+
+1. Clear route cache: `php artisan route:clear`
+2. Check that routes are registered: `php artisan route:list | grep email-change`
+3. Ensure middleware configuration is correct
+
+### Issue: Migration Fails
+
+**Solution:**
+
+1. Check if you have existing `email_changes` table
+2. If using UUIDs for users, ensure the migration handles this correctly
+3. Check database connection and permissions
 
 ## Contributing
 
@@ -526,7 +604,7 @@ The MIT License (MIT). Please see [License File](LICENSE.md) for more informatio
 ## Credits
 
 - [Milen MK](https://github.com/milenmk)
-- [All Contributors](../../contributors)
+- [All Contributors](CONTRIBUTORS.md)
 
 ## Changelog
 

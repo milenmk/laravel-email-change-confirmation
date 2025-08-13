@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace MilenMk\LaravelEmailChangeConfirmation\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class EmailChange extends Model
 {
@@ -20,24 +20,7 @@ class EmailChange extends Model
     /**
      * The attributes that are mass assignable.
      */
-    protected $fillable = [
-        'user_id',
-        'current_email',
-        'new_email',
-        'change_confirmed_at',
-        'change_denied_at',
-    ];
-
-    /**
-     * Get the attributes that should be cast.
-     */
-    protected function casts(): array
-    {
-        return [
-            'change_confirmed_at' => 'datetime',
-            'change_denied_at' => 'datetime',
-        ];
-    }
+    protected $fillable = ['user_id', 'current_email', 'new_email', 'change_confirmed_at', 'change_denied_at'];
 
     /**
      * Get the user that owns the email change.
@@ -45,7 +28,7 @@ class EmailChange extends Model
     public function user(): BelongsTo
     {
         $userModel = config('email-change-confirmation.user_model');
-        
+
         return $this->belongsTo($userModel, 'user_id');
     }
 
@@ -54,7 +37,7 @@ class EmailChange extends Model
      */
     public function isConfirmed(): bool
     {
-        return !is_null($this->change_confirmed_at);
+        return ! is_null($this->change_confirmed_at);
     }
 
     /**
@@ -62,7 +45,7 @@ class EmailChange extends Model
      */
     public function isDenied(): bool
     {
-        return !is_null($this->change_denied_at);
+        return ! is_null($this->change_denied_at);
     }
 
     /**
@@ -70,7 +53,7 @@ class EmailChange extends Model
      */
     public function isPending(): bool
     {
-        return !$this->isConfirmed() && !$this->isDenied();
+        return ! $this->isConfirmed() && ! $this->isDenied();
     }
 
     /**
@@ -79,6 +62,7 @@ class EmailChange extends Model
     public function confirm(): bool
     {
         $this->change_confirmed_at = now();
+
         return $this->save();
     }
 
@@ -88,6 +72,7 @@ class EmailChange extends Model
     public function deny(): bool
     {
         $this->change_denied_at = now();
+
         return $this->save();
     }
 
@@ -96,8 +81,7 @@ class EmailChange extends Model
      */
     public function scopePending($query)
     {
-        return $query->whereNull('change_confirmed_at')
-                    ->whereNull('change_denied_at');
+        return $query->whereNull('change_confirmed_at')->whereNull('change_denied_at');
     }
 
     /**
@@ -114,5 +98,16 @@ class EmailChange extends Model
     public function scopeDenied($query)
     {
         return $query->whereNotNull('change_denied_at');
+    }
+
+    /**
+     * Get the attributes that should be cast.
+     */
+    protected function casts(): array
+    {
+        return [
+            'change_confirmed_at' => 'datetime',
+            'change_denied_at' => 'datetime',
+        ];
     }
 }

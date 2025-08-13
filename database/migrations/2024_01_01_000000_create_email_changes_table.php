@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         $tableName = config('email-change-confirmation.table_name', 'email_changes');
@@ -16,26 +13,30 @@ return new class extends Migration
 
         Schema::connection($connection)->create($tableName, function (Blueprint $table) {
             $table->uuid('id')->primary();
-            
+
             // User relationship - flexible to work with different user table structures
             $userModel = config('email-change-confirmation.user_model', config('auth.providers.users.model'));
             $userTable = (new $userModel)->getTable();
             $userKeyType = (new $userModel)->getKeyType();
-            
+
             if ($userKeyType === 'int') {
                 $table->unsignedBigInteger('user_id');
             } else {
                 $table->uuid('user_id');
             }
-            
-            $table->foreign('user_id')->references('id')->on($userTable)->cascadeOnDelete();
-            
+
+            $table
+                ->foreign('user_id')
+                ->references('id')
+                ->on($userTable)
+                ->cascadeOnDelete();
+
             $table->string('current_email');
             $table->string('new_email');
             $table->timestamp('change_confirmed_at')->nullable();
             $table->timestamp('change_denied_at')->nullable();
             $table->timestamps();
-            
+
             // Indexes for performance
             $table->index('user_id');
             $table->index(['user_id', 'created_at']);
@@ -44,9 +45,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         $tableName = config('email-change-confirmation.table_name', 'email_changes');

@@ -6,10 +6,13 @@ use MilenMk\LaravelEmailChangeConfirmation\Models\EmailChange;
 
 class UserTraitTest extends TestCase
 {
-    public function testHasEmailChangesRelationship()
+    /**
+     * @test
+     */
+    public function has_email_changes_relationship()
     {
         $user = $this->createUser();
-        
+
         EmailChange::create([
             'user_id' => $user->id,
             'current_email' => 'old@example.com',
@@ -25,10 +28,13 @@ class UserTraitTest extends TestCase
         $this->assertCount(2, $user->emailChanges);
     }
 
-    public function testCanGetPendingEmailChanges()
+    /**
+     * @test
+     */
+    public function can_get_pending_email_changes()
     {
         $user = $this->createUser();
-        
+
         // Create pending change
         EmailChange::create([
             'user_id' => $user->id,
@@ -45,15 +51,18 @@ class UserTraitTest extends TestCase
         ]);
 
         $pendingChanges = $user->pendingEmailChanges;
-        
+
         $this->assertCount(1, $pendingChanges);
         $this->assertEquals('pending@example.com', $pendingChanges->first()->new_email);
     }
 
-    public function testCanCheckIfUserHasPendingEmailChange()
+    /**
+     * @test
+     */
+    public function can_check_if_user_has_pending_email_change()
     {
         $user = $this->createUser();
-        
+
         $this->assertFalse($user->hasPendingEmailChange());
 
         EmailChange::create([
@@ -65,10 +74,13 @@ class UserTraitTest extends TestCase
         $this->assertTrue($user->hasPendingEmailChange());
     }
 
-    public function testCanGetLatestPendingEmailChange()
+    /**
+     * @test
+     */
+    public function can_get_latest_pending_email_change()
     {
         $user = $this->createUser();
-        
+
         $this->assertNull($user->getLatestPendingEmailChange());
 
         $firstChange = EmailChange::create([
@@ -86,16 +98,19 @@ class UserTraitTest extends TestCase
         ]);
 
         $latestChange = $user->getLatestPendingEmailChange();
-        
+
         $this->assertNotNull($latestChange);
         $this->assertEquals('second@example.com', $latestChange->new_email);
         $this->assertEquals($secondChange->id, $latestChange->id);
     }
 
-    public function testCanCheckIfUserCanRequestEmailChange()
+    /**
+     * @test
+     */
+    public function can_check_if_user_can_request_email_change()
     {
         $user = $this->createUser();
-        
+
         // Initially should be able to request
         $this->assertTrue($user->canRequestEmailChange());
 
@@ -110,10 +125,13 @@ class UserTraitTest extends TestCase
         $this->assertFalse($user->canRequestEmailChange());
     }
 
-    public function testReturnsCorrectEmailForVerification()
+    /**
+     * @test
+     */
+    public function returns_correct_email_for_verification()
     {
         $user = $this->createUser(['email' => 'current@example.com']);
-        
+
         // Without pending change, should return current email
         $this->assertEquals('current@example.com', $user->getEmailForVerification());
 
@@ -127,10 +145,13 @@ class UserTraitTest extends TestCase
         $this->assertEquals('current@example.com', $user->getEmailForVerification());
     }
 
-    public function testHasLatestEmailChangeRelationship()
+    /**
+     * @test
+     */
+    public function has_latest_email_change_relationship()
     {
         $user = $this->createUser();
-        
+
         $firstChange = EmailChange::create([
             'user_id' => $user->id,
             'current_email' => 'old@example.com',
@@ -146,7 +167,7 @@ class UserTraitTest extends TestCase
         ]);
 
         $latestChange = $user->latestEmailChange;
-        
+
         $this->assertNotNull($latestChange);
         $this->assertEquals($secondChange->id, $latestChange->id);
         $this->assertEquals('second@example.com', $latestChange->new_email);

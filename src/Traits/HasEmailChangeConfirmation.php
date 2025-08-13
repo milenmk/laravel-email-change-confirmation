@@ -16,7 +16,7 @@ trait HasEmailChangeConfirmation
     public function emailChanges(): HasMany
     {
         $emailChangeModel = config('email-change-confirmation.email_change_model');
-        
+
         return $this->hasMany($emailChangeModel, 'user_id');
     }
 
@@ -26,7 +26,7 @@ trait HasEmailChangeConfirmation
     public function latestEmailChange(): HasOne
     {
         $emailChangeModel = config('email-change-confirmation.email_change_model');
-        
+
         return $this->hasOne($emailChangeModel, 'user_id')->latestOfMany();
     }
 
@@ -51,7 +51,9 @@ trait HasEmailChangeConfirmation
      */
     public function getLatestPendingEmailChange(): ?EmailChange
     {
-        return $this->pendingEmailChanges()->latest()->first();
+        return $this->pendingEmailChanges()
+            ->latest()
+            ->first();
     }
 
     /**
@@ -60,7 +62,7 @@ trait HasEmailChangeConfirmation
     public function canRequestEmailChange(): bool
     {
         $maxPending = config('email-change-confirmation.max_pending_changes_per_user', 1);
-        
+
         return $this->pendingEmailChanges()->count() < $maxPending;
     }
 
@@ -73,6 +75,7 @@ trait HasEmailChangeConfirmation
         // If there's a pending email change, use the current email for verification
         if ($this->hasPendingEmailChange()) {
             $pendingChange = $this->getLatestPendingEmailChange();
+
             return $pendingChange ? $pendingChange->current_email : $this->email;
         }
 

@@ -7,7 +7,7 @@ namespace MilenMk\LaravelEmailChangeConfirmation\Notifications;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\HtmlString;
 use MilenMk\LaravelEmailChangeConfirmation\Models\EmailChange;
@@ -52,7 +52,7 @@ class EmailChangeConfirmation extends Notification
     protected function confirmUrl(mixed $notifiable): string
     {
         $expireMinutes = config('email-change-confirmation.confirmation_email_expire_minutes', 60);
-        
+
         return URL::temporarySignedRoute(
             'email-change-confirmation.confirm',
             Carbon::now()->addMinutes($expireMinutes),
@@ -70,7 +70,7 @@ class EmailChangeConfirmation extends Notification
     protected function denyUrl(mixed $notifiable): string
     {
         $expireMinutes = config('email-change-confirmation.confirmation_email_expire_minutes', 60);
-        
+
         return URL::temporarySignedRoute(
             'email-change-confirmation.deny',
             Carbon::now()->addMinutes($expireMinutes),
@@ -89,15 +89,16 @@ class EmailChangeConfirmation extends Notification
     {
         $algorithm = config('email-change-confirmation.hash_algorithm', 'sha256');
         $secret = config('email-change-confirmation.hash_secret');
-        
+
         if ($secret) {
             // Use HMAC for better security
             return hash_hmac($algorithm, $email, $secret);
         }
-        
+
         // Fallback to simple hash for backward compatibility
         // Log warning about weak security
-        \Log::warning('EMAIL_CHANGE_HASH_SECRET not configured - using weak hashing');
+        Log::warning('EMAIL_CHANGE_HASH_SECRET not configured - using weak hashing');
+
         return hash($algorithm, $email);
     }
 
@@ -110,7 +111,7 @@ class EmailChangeConfirmation extends Notification
             ->greeting(__('Hello :user', ['user' => $this->username]))
             ->subject(__('Email Change Request Confirmation'))
             ->line(__('A request to change your account email address to **:new_email** has been made.', [
-                'new_email' => $this->newEmail
+                'new_email' => $this->newEmail,
             ]))
             ->line(__('If the request is genuine, please click the confirmation button below to confirm the change.'))
             ->action(__('Confirm Email Change'), $confirmUrl)
@@ -127,7 +128,7 @@ class EmailChangeConfirmation extends Notification
         // Set custom from address if configured
         $fromEmail = config('email-change-confirmation.from_email');
         $fromName = config('email-change-confirmation.from_name');
-        
+
         if ($fromEmail) {
             $mailMessage->from($fromEmail, $fromName);
         }
@@ -172,23 +173,23 @@ class EmailChangeConfirmation extends Notification
         if (isset($user->full_name)) {
             return $user->full_name;
         }
-        
+
         if (isset($user->name) && isset($user->last_name)) {
             return $user->name . ' ' . $user->last_name;
         }
-        
+
         if (isset($user->first_name) && isset($user->last_name)) {
             return $user->first_name . ' ' . $user->last_name;
         }
-        
+
         if (isset($user->name)) {
             return $user->name;
         }
-        
+
         if (isset($user->first_name)) {
             return $user->first_name;
         }
-        
+
         // Fallback to email
         return $user->email;
     }

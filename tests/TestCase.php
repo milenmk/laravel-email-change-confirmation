@@ -15,20 +15,18 @@ abstract class TestCase extends Orchestra
 
         $this->setUpDatabase();
     }
-    
+
     protected function tearDown(): void
     {
         Schema::dropIfExists('email_changes');
         Schema::dropIfExists('users');
-        
+
         parent::tearDown();
     }
 
     protected function getPackageProviders($app): array
     {
-        return [
-            EmailChangeConfirmationServiceProvider::class,
-        ];
+        return [EmailChangeConfirmationServiceProvider::class];
     }
 
     protected function defineEnvironment($app): void
@@ -45,7 +43,7 @@ abstract class TestCase extends Orchestra
         $app['config']->set('email-change-confirmation.user_model', TestUser::class);
         $app['config']->set('email-change-confirmation.table_name', 'email_changes');
         $app['config']->set('email-change-confirmation.connection', null);
-        
+
         $app['config']->set('mail.default', 'array');
         $app['config']->set('queue.default', 'sync');
         $app['config']->set('cache.default', 'array');
@@ -69,13 +67,17 @@ abstract class TestCase extends Orchestra
         Schema::create('email_changes', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->unsignedBigInteger('user_id');
-            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+            $table
+                ->foreign('user_id')
+                ->references('id')
+                ->on('users')
+                ->cascadeOnDelete();
             $table->string('current_email');
             $table->string('new_email');
             $table->timestamp('change_confirmed_at')->nullable();
             $table->timestamp('change_denied_at')->nullable();
             $table->timestamps();
-            
+
             // Indexes for performance
             $table->index('user_id');
             $table->index(['user_id', 'created_at']);
@@ -86,10 +88,15 @@ abstract class TestCase extends Orchestra
 
     protected function createUser(array $attributes = []): TestUser
     {
-        return TestUser::create(array_merge([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => bcrypt('password'),
-        ], $attributes));
+        return TestUser::create(
+            array_merge(
+                [
+                    'name' => 'Test User',
+                    'email' => 'test@example.com',
+                    'password' => bcrypt('password'),
+                ],
+                $attributes,
+            ),
+        );
     }
 }

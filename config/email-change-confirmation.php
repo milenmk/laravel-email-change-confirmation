@@ -45,7 +45,7 @@ return [
     */
     'confirmation_email_expire_minutes' => 60,
     'from_email' => null, // Uses default mail from address if null
-    'from_name' => null,  // Uses default mail from name if null
+    'from_name' => null, // Uses default mail from name if null
 
     /*
     |--------------------------------------------------------------------------

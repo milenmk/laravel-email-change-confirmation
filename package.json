@@ -2,9 +2,10 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "format-app": "npx prettier --write src/",
+        "format-src": "npx prettier --write src/",
         "format-examples": "npx prettier --write examples/",
-        "format-tests": "npx prettier --write tests/"
+        "format-tests": "npx prettier --write tests/",
+        "prepare": "husky install"
     },
     "dependencies": {
         "autoprefixer": "^10.4.21"
@@ -20,7 +21,7 @@
     "lint-staged": {
         "**/*.php*": [
             "vendor/bin/duster fix",
-            "npm run format-app",
+            "npm run format-src",
             "npm run format-examples",
             "npm run format-tests"
         ]
