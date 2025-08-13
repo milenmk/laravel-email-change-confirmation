@@ -1,0 +1,12 @@
+build
+/build
+vendor
+/vendor
+node_modules
+/node_modules
+/.idea
+phpunit.xml
+.phpunit.result.cache
+.phpunit.cache
+composer.lock
+package-lock.json
