@@ -26,6 +26,12 @@ class EmailChangeRequest extends FormRequest
             return false;
         }
 
+        // CRITICAL SECURITY CHECK: Verify the currently authenticated user is the same as the route user
+        $authenticatedUser = $this->user();
+        if (! $authenticatedUser || ! hash_equals((string) $authenticatedUser->getKey(), (string) $this->route('id'))) {
+            return false;
+        }
+
         // Verify the hash matches the current email
         $expectedHash = $this->generateHash($emailChange->current_email);
         if (! hash_equals($expectedHash, (string) $this->route('hash'))) {

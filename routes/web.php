@@ -34,9 +34,9 @@ Route::post('request', [$controllerClass, 'requestChange'])
 
 Route::post('cancel-pending', [$controllerClass, 'cancelPending'])
     ->name('cancel-pending')
-    ->middleware('auth');
+    ->middleware(['web', 'auth']);
 
 // Also add GET route for direct access (like from email links)
 Route::get('cancel-pending', [$controllerClass, 'cancelPending'])
     ->name('cancel-pending-get')
-    ->middleware('auth');
+    ->middleware(['web', 'auth']);

@@ -1,6 +1,45 @@
 # Changelog
 
-All notable changes to `laravel-email-change-confirmation` will be documented in this file.
+All notable changes to this project will be documented in this file.
+
+## V1.1.0-alpha
+
+#### Published at: 2025-08-14
+
+### Added
+
+- **Configurable Redirect Routes**: Added configuration options for custom redirect routes after email change actions
+    - `redirect_after_confirm` - Where to redirect after confirming email change
+    - `redirect_after_deny` - Where to redirect after denying email change
+    - `redirect_after_cancel` - Where to redirect after canceling pending change
+- **Automatic Cleanup System**: Added automatic cleanup of expired email change requests
+    - New `CleanupExpiredEmailChanges` job to mark expired pending requests as denied
+    - New `email-change:cleanup-expired` Artisan command with `--queue` option
+    - Configuration options: `auto_cleanup_expired` and `cleanup_schedule`
+- **Enhanced Controller Methods**: Added separate redirect methods for different actions
+    - `getConfiguredRedirect()` - Uses configured redirect routes
+    - `getCancelRedirect()` - Specific redirect logic for cancel operations
+    - `getSuccessRedirect()` - Enhanced with configurable route support
+
+### Fixed
+
+- **Mass Assignment Errors**: Fixed `email_verified_at` mass assignment errors that occurred when this field wasn't
+  included in User model's `$fillable` array
+- **Authentication Issues**: Added proper `web` middleware to cancel-pending routes to fix 403 errors
+- **Double Update Bug**: Removed redundant user update calls in email confirmation process
+
+### Changed
+
+- **Expired Request Handling**: Expired requests are now marked as `denied` instead of `expired` status
+- **Route Middleware**: Enhanced route middleware configuration for better security
+- **Documentation**: Updated README with comprehensive configuration examples and usage instructions
+
+### Security
+
+- **Fixed Mass Assignment Issues**: Resolved mass assignment errors when updating system-managed fields by using
+  `updateQuietly()` for confirmed email changes and `email_verified_at` resets (prevents issues when these fields are
+  not in User model's `$fillable` array)
+- **Enhanced Route Security**: Added proper middleware stacking for all routes
 
 ## V1.0.1
 
@@ -10,32 +49,14 @@ All notable changes to `laravel-email-change-confirmation` will be documented in
 - Improved logging
 - various bug fixes
 
-## v1.0.0
-
-#### Published at: 2025-08-13
+## [1.0.0] - Initial Release
 
 ### Added
 
-- Initial release
-- Secure email change confirmation functionality
-- Automatic email change detection using model observers
-- Integration with Laravel's email verification system
-- Support for both traditional controllers and Livewire components
-- Configurable notification system
-- Extensible architecture with customizable controllers, services, and notifications
-- Comprehensive documentation
-- Support for different Laravel starter kits and custom applications
-- Security features including signed URLs, hash verification, and rate limiting
-
-### Framework Support
-
-- Laravel 10.x: Full support
-- Laravel 11.x: Full support
-- Laravel 12.x: Full support
-- PHP 8.2, 8.3, 8.4: Full support
-
-### Testing
-
-- Comprehensive test suite with Orchestra Testbench
-- Standalone testing capability (no Laravel app required)
-- In-memory SQLite testing database
+- Email change confirmation system with double opt-in security
+- Automatic email change detection via model observers
+- Livewire integration support
+- Configurable security settings and rate limiting
+- Email verification integration for Laravel's MustVerifyEmail
+- Comprehensive test suite
+- Detailed documentation and examples

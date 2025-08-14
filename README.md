@@ -1,6 +1,7 @@
 # Laravel Email Change Confirmation
 
-A Laravel package that provides secure email change confirmation functionality. When users attempt to change their email address, they must confirm the change via their current email address before the change takes effect.
+A Laravel package that provides secure email change confirmation functionality. When users attempt to change their email
+address, they must confirm the change via their current email address before the change takes effect.
 
 ## Features
 
@@ -49,7 +50,8 @@ For enhanced security, add a hash secret to your `.env` file:
 php -r "echo 'EMAIL_CHANGE_HASH_SECRET=' . base64_encode(random_bytes(32)) . PHP_EOL;"
 ```
 
-Add the generated line to your `.env` file. This enables HMAC-based hashing instead of plain SHA-256 for better security.
+Add the generated line to your `.env` file. This enables HMAC-based hashing instead of plain SHA-256 for better
+security.
 
 ## Quick Start
 
@@ -96,7 +98,8 @@ class User extends Authenticatable
 
 ### 3. That's It!
 
-The package will automatically detect email changes and handle the confirmation process. When a user tries to change their email:
+The package will automatically detect email changes and handle the confirmation process. When a user tries to change
+their email:
 
 1. The original email remains unchanged
 2. A confirmation email is sent to the current email address
@@ -107,7 +110,8 @@ The package will automatically detect email changes and handle the confirmation 
 
 ### Automatic Detection (Recommended)
 
-By default, the package automatically detects email changes using model observers. Simply update the user's email as you normally would:
+By default, the package automatically detects email changes using model observers. Simply update the user's email as you
+normally would:
 
 ```php
 // In a controller
@@ -140,6 +144,36 @@ $pendingChanges = EmailChangeConfirmation::getPendingEmailChanges($user);
 
 // Cancel pending changes
 $cancelled = EmailChangeConfirmation::cancelPendingEmailChanges($user);
+```
+
+### Displaying Pending Email Changes
+
+When a user has a pending email change, you can display a notification with a cancel button:
+
+```blade
+{{-- In your Blade template --}}
+@if (auth()->user()->hasPendingEmailChange())
+    @php
+        $pendingChange = auth()
+            ->user()
+            ->getLatestPendingEmailChange();
+    @endphp
+
+    <div class="alert alert-warning">
+        <strong>Pending Email Change</strong>
+        <br />
+        You have requested to change your email to
+        <strong>{{ $pendingChange->new_email }}</strong>
+        .
+        <br />
+        Please check your current email address ({{ $pendingChange->current_email }}) for confirmation instructions.
+        <hr />
+        <form method="POST" action="{{ route('email-change-confirmation.cancel-pending') }}" class="d-inline">
+            @csrf
+            <button type="submit" class="btn btn-sm btn-outline-danger">Cancel Request</button>
+        </form>
+    </div>
+@endif
 ```
 
 ### Using the Service Class
@@ -233,10 +267,19 @@ return [
     'route_prefix' => 'email-change',
     'middleware' => ['web', 'auth', 'signed'],
 
+    // Redirect routes after actions
+    'redirect_after_confirm' => null, // e.g., 'dashboard' or 'profile.edit'
+    'redirect_after_deny' => null, // e.g., 'dashboard' or 'profile.edit'
+    'redirect_after_cancel' => null, // e.g., 'dashboard' or 'profile.edit'
+
     // Email settings
     'confirmation_email_expire_minutes' => 60,
     'from_email' => null,
     'from_name' => null,
+
+    // Cleanup configuration
+    'auto_cleanup_expired' => true,
+    'cleanup_schedule' => 'hourly', // hourly, daily, weekly
 
     // Notification settings
     'send_notification_to_user' => true,
@@ -263,6 +306,58 @@ return [
     'livewire_notification_event' => 'email-change-notification',
 ];
 ```
+
+## Automatic Cleanup of Expired Requests
+
+The package provides automatic cleanup of expired email change requests to prevent database bloat and security issues.
+
+### Manual Cleanup
+
+You can manually clean up expired requests using the provided Artisan command:
+
+```bash
+# Run cleanup synchronously
+php artisan email-change:cleanup-expired
+
+# Dispatch cleanup job to queue
+php artisan email-change:cleanup-expired --queue
+```
+
+### Automatic Cleanup with Task Scheduling
+
+To automatically clean up expired requests, add the command to your `app/Console/Kernel.php`:
+
+```php
+// app/Console/Kernel.php
+
+protected function schedule(Schedule $schedule)
+{
+    // Clean up expired email changes every hour
+    $schedule->command('email-change:cleanup-expired')
+        ->hourly()
+        ->withoutOverlapping();
+
+    // Or run daily at 2 AM
+    $schedule->command('email-change:cleanup-expired')
+        ->dailyAt('02:00')
+        ->withoutOverlapping();
+}
+```
+
+### Configuration
+
+Configure cleanup behavior in your config file:
+
+```php
+// config/email-change-confirmation.php
+
+'auto_cleanup_expired' => true,        // Enable automatic cleanup
+'cleanup_schedule' => 'hourly',        // How often to run (hourly, daily, weekly)
+'confirmation_email_expire_minutes' => 60, // When requests expire
+```
+
+When expired requests are cleaned up, they are marked as `denied` with a `denied_at` timestamp, preserving the audit
+trail while preventing them from being used.
 
 ## Customization
 
@@ -312,6 +407,23 @@ Update your configuration:
 // config/email-change-confirmation.php
 'email_change_controller' => App\Http\Controllers\CustomEmailChangeController::class,
 ```
+
+### Configuring Redirects
+
+You can configure where users are redirected after email change actions:
+
+```php
+// config/email-change-confirmation.php
+
+'redirect_after_confirm' => 'dashboard',     // After confirming email change
+'redirect_after_deny' => 'profile.edit',    // After denying email change
+'redirect_after_cancel' => 'profile.edit',  // After canceling pending change
+```
+
+If no redirect route is configured, the package will try common routes like `dashboard`, `home`, `profile.show`, or
+`profile`, and fall back to the root URL (`/`).
+
+For the cancel action specifically, if no redirect is configured, it will use `back()` to return to the previous page.
 
 ### Custom Notification
 
@@ -405,7 +517,8 @@ The package integrates seamlessly with Fortify's profile update actions.
 
 ### Custom Applications
 
-The package is designed to work with any Laravel application structure. Use manual integration if auto-detection doesn't work for your setup.
+The package is designed to work with any Laravel application structure. Use manual integration if auto-detection doesn't
+work for your setup.
 
 ### Trait Methods
 

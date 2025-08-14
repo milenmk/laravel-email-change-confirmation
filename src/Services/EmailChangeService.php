@@ -54,21 +54,17 @@ class EmailChangeService
         $user = $emailChange->user;
         $oldEmail = $user->email;
 
-        // Prepare update data
-        $updateData = ['email' => $emailChange->new_email];
-
-        // Use updateQuietly to bypass model events (including our observer)
+        // Update user email using updateQuietly to bypass model events (including our observer)
         // This prevents the observer from interfering with the confirmation process
-        $user->updateQuietly($updateData);
+        $user->updateQuietly(['email' => $emailChange->new_email]);
 
         // Mark email change as confirmed
         $emailChange->confirm();
 
         // Reset email verification if user implements MustVerifyEmail
         if ($user instanceof MustVerifyEmail) {
-            // $updateData['email_verified_at'] = null;
-            $user->email_verified_at = null;
-            $user->update();
+            // Use updateQuietly to avoid mass assignment issues
+            $user->updateQuietly(['email_verified_at' => null]);
         }
 
         // Send email verification if enabled and user implements MustVerifyEmail
@@ -122,7 +118,7 @@ class EmailChangeService
             return 0;
         }
 
-        // Cancel the changes
+        // Cancel the changes by marking them as denied
         $cancelled = $emailChangeModel::where('user_id', $user->getKey())
             ->pending()
             ->update(['change_denied_at' => now()]);

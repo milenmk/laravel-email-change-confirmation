@@ -13,7 +13,6 @@ class EmailChangeCancelled extends Notification
     use Queueable;
 
     protected string $cancelledEmail;
-
     protected int $cancelledCount;
 
     public function __construct(string $cancelledEmail, int $cancelledCount = 1)

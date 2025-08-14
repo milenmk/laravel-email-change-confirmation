@@ -7,6 +7,7 @@ namespace MilenMk\LaravelEmailChangeConfirmation;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use MilenMk\LaravelEmailChangeConfirmation\Console\Commands\CleanupExpiredEmailChanges;
 use MilenMk\LaravelEmailChangeConfirmation\Observers\UserObserver;
 use MilenMk\LaravelEmailChangeConfirmation\Services\EmailChangeService;
 
@@ -50,6 +51,7 @@ class EmailChangeConfirmationServiceProvider extends ServiceProvider
 
         $this->registerRoutes();
         $this->registerObserver();
+        $this->registerCommands();
         $this->validateSecurityConfiguration();
     }
 
@@ -61,7 +63,6 @@ class EmailChangeConfirmationServiceProvider extends ServiceProvider
         if (! $this->app->routesAreCached()) {
             Route::group(
                 [
-                    'middleware' => config('email-change-confirmation.middleware', ['web']),
                     'prefix' => config('email-change-confirmation.route_prefix', 'email-change'),
                     'as' => 'email-change-confirmation.',
                 ],
@@ -83,6 +84,16 @@ class EmailChangeConfirmationServiceProvider extends ServiceProvider
             if ($userModel && class_exists($userModel)) {
                 $userModel::observe(UserObserver::class);
             }
+        }
+    }
+
+    /**
+     * Register console commands.
+     */
+    protected function registerCommands(): void
+    {
+        if ($this->app->runningInConsole()) {
+            $this->commands([CleanupExpiredEmailChanges::class]);
         }
     }
 

@@ -3,7 +3,6 @@
     "type": "module",
     "scripts": {
         "format-src": "npx prettier --write src/",
-        "format-tests": "npx prettier --write tests/",
         "prepare": "husky install"
     },
     "dependencies": {
@@ -20,8 +19,7 @@
     "lint-staged": {
         "**/*.php*": [
             "vendor/bin/duster fix",
-            "npm run format-src",
-            "npm run format-tests"
+            "npm run format-src"
         ]
     }
 }

@@ -165,9 +165,9 @@ class EmailChangeController extends Controller
             $cancelled = $this->emailChangeService->cancelPendingEmailChanges($user);
 
             if ($cancelled > 0) {
-                return back()->with('success', "Cancelled {$cancelled} pending email change(s).");
+                return $this->getCancelRedirect()->with('success', "Cancelled {$cancelled} pending email change(s).");
             } else {
-                return back()->with('info', 'No pending email changes to cancel.');
+                return $this->getCancelRedirect()->with('info', 'No pending email changes to cancel.');
             }
         } catch (Exception $e) {
             // Log the full error for debugging
@@ -178,10 +178,33 @@ class EmailChangeController extends Controller
             ]);
 
             // Return generic error to user to prevent information disclosure
-            return back()->withErrors([
+            return $this->getCancelRedirect()->withErrors([
                 'error' => 'Failed to cancel pending email changes. Please try again or contact support.',
             ]);
         }
+    }
+
+    /**
+     * Get the redirect response for cancel operations.
+     */
+    protected function getCancelRedirect(): RedirectResponse
+    {
+        $configuredRoute = config('email-change-confirmation.redirect_after_cancel');
+        if ($configuredRoute && Route::has($configuredRoute)) {
+            return redirect()->route($configuredRoute);
+        }
+
+        // Try common route names in order of preference
+        $routes = ['dashboard', 'home', 'profile.show', 'profile'];
+
+        foreach ($routes as $route) {
+            if (Route::has($route)) {
+                return redirect()->route($route);
+            }
+        }
+
+        // Fallback to back() if no common routes exist
+        return back();
     }
 
     /**
@@ -211,7 +234,10 @@ class EmailChangeController extends Controller
                 ->with('success', 'Email change confirmed successfully. Please verify your new email address.');
         }
 
-        return $this->getSuccessRedirect()->with('success', 'Email change confirmed successfully.');
+        return $this->getSuccessRedirect('redirect_after_confirm')->with(
+            'success',
+            'Email change confirmed successfully.',
+        );
     }
 
     /**
@@ -219,16 +245,27 @@ class EmailChangeController extends Controller
      */
     protected function handleSuccessfulDenial(EmailChange $emailChange): RedirectResponse
     {
-        return $this->getSuccessRedirect()->with('success', 'Email change request has been denied successfully.');
+        return $this->getSuccessRedirect('redirect_after_deny')->with(
+            'success',
+            'Email change request has been denied successfully.',
+        );
     }
 
     /**
      * Get the redirect response for successful operations.
      * Override this method to customize the redirect destination.
      */
-    protected function getSuccessRedirect(): RedirectResponse
+    protected function getSuccessRedirect(?string $configKey = null): RedirectResponse
     {
-        // Try common route names
+        // Check for configured redirect route
+        if ($configKey) {
+            $configuredRoute = config("email-change-confirmation.{$configKey}");
+            if ($configuredRoute && Route::has($configuredRoute)) {
+                return redirect()->route($configuredRoute);
+            }
+        }
+
+        // Try common route names in order of preference
         $routes = ['dashboard', 'home', 'profile.show', 'profile'];
 
         foreach ($routes as $route) {

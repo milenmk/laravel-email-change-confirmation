@@ -16,11 +16,8 @@ use MilenMk\LaravelEmailChangeConfirmation\Models\EmailChange;
 class EmailChangeConfirmation extends Notification
 {
     protected EmailChange $emailChange;
-
     protected string $username;
-
     protected string $oldEmail;
-
     protected string $newEmail;
 
     public function __construct(EmailChange $emailChange)
@@ -164,30 +161,18 @@ class EmailChangeConfirmation extends Notification
         $mailMessage = (new MailMessage)
             ->greeting(__('Hello :user', ['user' => $this->username]))
             ->subject(__('Email Change Request Confirmation'))
-            ->line(
-                __('Blas bla A request to change your account email address to **:new_email** has been made.', [
-                    'new_email' => $this->newEmail,
-                ]),
-            )
+            ->line(__('Blas bla A request to change your account email address to **:new_email** has been made.', [
+                'new_email' => $this->newEmail,
+            ]))
             ->line(__('If the request is genuine, please click the confirmation button below to confirm the change.'))
             ->action(__('Confirm Email Change'), $confirmUrl)
             ->success();
 
         // Add security warning and deny button
         $mailMessage
-            ->line(
-                __(
-                    'If you did not request this change, it is possible that your account has been compromised. Please click the button below to deny this request and secure your account.',
-                ),
-            )
+            ->line(__('If you did not request this change, it is possible that your account has been compromised. Please click the button below to deny this request and secure your account.'))
             ->line($this->buildDenyButton($denyUrl))
-            ->line(
-                new HtmlString(
-                    __(
-                        'If you\'re having trouble clicking the buttons, copy and paste the URLs below into your web browser:',
-                    ),
-                ),
-            )
+            ->line(new HtmlString(__('If you\'re having trouble clicking the buttons, copy and paste the URLs below into your web browser:')))
             ->line(__('Confirm: :url', ['url' => $confirmUrl]))
             ->line(__('Deny: :url', ['url' => $denyUrl]));
 
@@ -217,11 +202,7 @@ class EmailChangeConfirmation extends Notification
                                     <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif, \'Apple Color Emoji\', \'Segoe UI Emoji\', \'Segoe UI Symbol\'; position: relative;">
                                         <tr>
                                             <td style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif, \'Apple Color Emoji\', \'Segoe UI Emoji\', \'Segoe UI Symbol\'; position: relative;">
-                                                <a href="' .
-                $denyUrl .
-                '" class="button button-red" target="_blank" rel="noopener" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif, \'Apple Color Emoji\', \'Segoe UI Emoji\', \'Segoe UI Symbol\'; position: relative; -webkit-text-size-adjust: none; border-radius: 4px; color: #fff; display: inline-block; overflow: hidden; text-decoration: none; background-color: #dc3545; border-bottom: 8px solid #dc3545; border-left: 18px solid #dc3545; border-right: 18px solid #dc3545; border-top: 8px solid #dc3545;">' .
-                __('DENY REQUEST') .
-                '</a>
+                                                <a href="' . $denyUrl . '" class="button button-red" target="_blank" rel="noopener" style="box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif, \'Apple Color Emoji\', \'Segoe UI Emoji\', \'Segoe UI Symbol\'; position: relative; -webkit-text-size-adjust: none; border-radius: 4px; color: #fff; display: inline-block; overflow: hidden; text-decoration: none; background-color: #dc3545; border-bottom: 8px solid #dc3545; border-left: 18px solid #dc3545; border-right: 18px solid #dc3545; border-top: 8px solid #dc3545;">' . __('DENY REQUEST') . '</a>
                                             </td>
                                         </tr>
                                     </table>
@@ -230,7 +211,7 @@ class EmailChangeConfirmation extends Notification
                         </table>
                     </td>
                 </tr>
-            </table>',
+            </table>'
         );
     }
 }

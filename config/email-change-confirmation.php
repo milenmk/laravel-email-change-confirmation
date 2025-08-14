@@ -37,6 +37,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Redirect Routes
+    |--------------------------------------------------------------------------
+    |
+    | Configure where users are redirected after email change actions.
+    | Set to null to use Laravel's default redirect behavior.
+    |
+    */
+    'redirect_after_confirm' => 'dashboard', // Default redirect after confirming email change
+    'redirect_after_deny' => 'dashboard', // Default redirect after denying email change
+    'redirect_after_cancel' => 'dashboard', // Default redirect after canceling pending change
+
+    /*
+    |--------------------------------------------------------------------------
     | Email Configuration
     |--------------------------------------------------------------------------
     |
@@ -46,6 +59,17 @@ return [
     'confirmation_email_expire_minutes' => 60,
     'from_email' => null, // Uses default mail from address if null
     'from_name' => null, // Uses default mail from name if null
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cleanup Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configure automatic cleanup of expired email change requests.
+    |
+    */
+    'auto_cleanup_expired' => true, // Automatically clean up expired requests
+    'cleanup_schedule' => 'hourly', // How often to run cleanup (hourly, daily, weekly)
 
     /*
     |--------------------------------------------------------------------------
