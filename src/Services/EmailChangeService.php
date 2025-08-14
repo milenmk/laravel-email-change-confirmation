@@ -63,8 +63,9 @@ class EmailChangeService
 
         // Reset email verification if user implements MustVerifyEmail
         if ($user instanceof MustVerifyEmail) {
-            // Use updateQuietly to avoid mass assignment issues
-            $user->updateQuietly(['email_verified_at' => null]);
+            // Set email_verified_at to null and save without triggering events
+            $user->email_verified_at = null;
+            $user->saveQuietly();
         }
 
         // Send email verification if enabled and user implements MustVerifyEmail

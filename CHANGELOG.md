@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## V1.2.0
+
+#### Published at: 2025-08-14
+
+- **Email Verification Reset**: Fixed issue where `email_verified_at` wasn't being properly reset to null during email
+  change confirmation
+- **Redirect Configuration**: Fixed email change confirmation redirects to properly respect configured routes for users
+  without `MustVerifyEmail`
+
 ## V1.1.0-alpha
 
 #### Published at: 2025-08-14
@@ -24,8 +33,8 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - **Mass Assignment Errors**: Fixed `email_verified_at` mass assignment errors that occurred when this field wasn't
-  included in User model's `$fillable` array
-- **Authentication Issues**: Added proper `web` middleware to cancel-pending routes to fix 403 errors
+  included in User model's `$fillable` array by using direct attribute assignment with `saveQuietly()`- **Authentication
+  Issues**: Added proper `web` middleware to cancel-pending routes to fix 403 errors
 - **Double Update Bug**: Removed redundant user update calls in email confirmation process
 
 ### Changed

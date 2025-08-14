@@ -227,13 +227,14 @@ class EmailChangeController extends Controller
     {
         $user = $emailChange->user;
 
-        // Check if user implements MustVerifyEmail and redirect accordingly
+        // If user implements MustVerifyEmail and email_verified_at is null, redirect to verification notice
         if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && is_null($user->email_verified_at)) {
             return redirect()
                 ->route('verification.notice')
                 ->with('success', 'Email change confirmed successfully. Please verify your new email address.');
         }
 
+        // For users without MustVerifyEmail, redirect to configured route
         return $this->getSuccessRedirect('redirect_after_confirm')->with(
             'success',
             'Email change confirmed successfully.',

@@ -81,7 +81,7 @@ class SecurityTest extends TestCase
     /**
      * @test
      */
-    public function blocked_domains_case_insensitive_test()
+    public function blocked_domains_case_insensitive()
     {
         Config::set('email-change-confirmation.blocked_domains', ['tempmail.com', 'spam.com']);
 

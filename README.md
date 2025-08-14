@@ -41,6 +41,8 @@ Optionally, publish the configuration file:
 php artisan vendor:publish --tag="email-change-confirmation-config"
 ```
 
+Add the `HasEmailChangeConfirmation` trait to your user model
+
 ### Security Configuration (Recommended)
 
 For enhanced security, add a hash secret to your `.env` file:
