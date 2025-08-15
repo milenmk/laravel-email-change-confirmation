@@ -710,7 +710,7 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## Security
 
-If you discover any security-related issues, please email security@example.com instead of using the issue tracker.
+See [SECURITY.md](SECURITY.md) for more information on how to report security vulnerabilities.
 
 ## License
 
