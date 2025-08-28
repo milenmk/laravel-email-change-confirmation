@@ -1,5 +1,32 @@
 # Laravel Email Change Confirmation
 
+<p style="display: flex; justify-content: center; gap: 8px;">
+    <a href="https://packagist.org/packages/milenmk/laravel-email-change-confirmation" target="_blank">
+        <img src="https://img.shields.io/packagist/v/milenmk/laravel-email-change-confirmation.svg?style=flat-square" alt="Latest Version on Packagist" />
+    </a>
+    <a href="https://packagist.org/packages/milenmk/laravel-email-change-confirmation" target="_blank">
+        <img src="https://img.shields.io/packagist/dt/milenmk/laravel-email-change-confirmation.svg?style=flat-square" alt="Total Downloads" />
+    </a>
+    <a href="https://github.com/milenmk/laravel-email-change-confirmation" target="_blank">
+        <img alt="GitHub User's stars" src="https://img.shields.io/github/stars/milenmk/laravel-email-change-confirmation">
+    </a>
+    <a href="https://laravel.com/docs" target="_blank">
+        <img src="https://img.shields.io/badge/Laravel-10.x-orange?style=flat-square&logo=laravel" alt="Laravel 10 Support" />
+    </a>
+    <a href="https://www.php.net" target="_blank">
+        <img src="https://img.shields.io/packagist/php-v/milenmk/laravel-email-change-confirmation?style=flat-square" alt="PHP Version Support" />
+    </a>
+    <a href="https://github.com/milenmk/laravel-email-change-confirmation/blob/develop/LICENSE.md" target="_blank">
+        <img src="https://img.shields.io/packagist/l/milenmk/laravel-email-change-confirmation.svg?style=flat-square" alt="License" />
+    </a>
+    <a href="https://github.com/milenmk/laravel-email-change-confirmation/issues" target="_blank">
+        <img src="https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat-square" alt="Contributions Welcome" />
+    </a>
+    <a href="https://www.patreon.com/c/LaravelAddonsbyMilen" target="_blank">
+        <img src="https://img.shields.io/badge/Sponsor-%E2%9D%A4-ff69b4?style=flat-square" alt="Sponsor me" />
+    </a>
+</p>
+
 A Laravel package that provides secure email change confirmation functionality. When users attempt to change their email
 address, they must confirm the change via their current email address before the change takes effect.
 
@@ -712,10 +739,6 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 See [SECURITY.md](SECURITY.md) for more information on how to report security vulnerabilities.
 
-## License
-
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
-
 ## Credits
 
 - [Milen MK](https://github.com/milenmk)
@@ -724,3 +747,22 @@ The MIT License (MIT). Please see [License File](LICENSE.md) for more informatio
 ## Changelog
 
 Please see [CHANGELOG.md](CHANGELOG.md) for more information on what has changed recently.
+
+## Support My Work
+
+If this package saves you time, you can support ongoing development:  
+👉 [Become a Patron](https://www.patreon.com/c/LaravelAddonsbyMilen)
+
+## License
+
+This package is licensed under the MIT License. See the [LICENSE](LICENSE.md) file for more details.
+
+## Disclaimer
+
+This package is provided "as is", without warranty of any kind, express or implied, including but not limited to
+warranties of merchantability, fitness for a particular purpose, or noninfringement.
+
+The author(s) make no guarantees regarding the accuracy, reliability, or completeness of the code, and shall not be held
+liable for any damages or losses arising from its use.
+
+Please ensure you thoroughly test this package in your environment before deploying it to production.
