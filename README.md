@@ -765,8 +765,8 @@ Check out my other Laravel packages:
   Languages and Currencies models to your Laravel application
 - **[Laravel Rate Limiting](https://packagist.org/packages/milenmk/laravel-rate-limiting)** - Advanced rate limiting
   capabilities with exponential backoff
-- **[Laravel Simple Datatables and Forms](https://packagist.org/packages/milenmk/laravel-simple-datatables-and-forms)
-  ** - Easy to use package to create datatables and forms for Livewire components
+- **[Laravel Datatables and Forms](https://packagist.org/packages/milenmk/laravel-simple-datatables-and-forms)** - Easy
+  to use package to create datatables and forms for Livewire components
 
 ## License
 
