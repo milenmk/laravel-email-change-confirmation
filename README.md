@@ -1,31 +1,17 @@
 # Laravel Email Change Confirmation
 
-<p style="display: flex; justify-content: center; gap: 8px;">
-    <a href="https://packagist.org/packages/milenmk/laravel-email-change-confirmation" target="_blank">
-        <img src="https://img.shields.io/packagist/v/milenmk/laravel-email-change-confirmation.svg?style=flat-square" alt="Latest Version on Packagist" />
-    </a>
-    <a href="https://packagist.org/packages/milenmk/laravel-email-change-confirmation" target="_blank">
-        <img src="https://img.shields.io/packagist/dt/milenmk/laravel-email-change-confirmation.svg?style=flat-square" alt="Total Downloads" />
-    </a>
-    <a href="https://github.com/milenmk/laravel-email-change-confirmation" target="_blank">
-        <img alt="GitHub User's stars" src="https://img.shields.io/github/stars/milenmk/laravel-email-change-confirmation">
-    </a>
-    <a href="https://laravel.com/docs" target="_blank">
-        <img src="https://img.shields.io/badge/Laravel-10.x|11.x|12.x-orange?style=flat-square&logo=laravel" alt="Laravel 10 Support" />
-    </a>
-    <a href="https://www.php.net" target="_blank">
-        <img src="https://img.shields.io/packagist/php-v/milenmk/laravel-email-change-confirmation?style=flat-square" alt="PHP Version Support" />
-    </a>
-    <a href="https://github.com/milenmk/laravel-email-change-confirmation/blob/develop/LICENSE.md" target="_blank">
-        <img src="https://img.shields.io/packagist/l/milenmk/laravel-email-change-confirmation.svg?style=flat-square" alt="License" />
-    </a>
-    <a href="https://github.com/milenmk/laravel-email-change-confirmation/issues" target="_blank">
-        <img src="https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat-square" alt="Contributions Welcome" />
-    </a>
-    <a href="https://www.patreon.com/c/LaravelAddonsbyMilen" target="_blank">
-        <img src="https://img.shields.io/badge/Sponsor-%E2%9D%A4-ff69b4?style=flat-square" alt="Sponsor me" />
-    </a>
-</p>
+<div align="center">
+
+<a href="https://packagist.org/packages/milenmk/laravel-email-change-confirmation">![Latest Version on Packagist](https://img.shields.io/packagist/v/milenmk/laravel-email-change-confirmation.svg?style=flat-square)</a>
+<a href="https://packagist.org/packages/milenmk/laravel-email-change-confirmation">![Total Downloads](https://img.shields.io/packagist/dt/milenmk/laravel-email-change-confirmation.svg?style=flat-square)</a>
+<a href="https://github.com/milenmk/laravel-email-change-confirmation">![GitHub User's stars](https://img.shields.io/github/stars/milenmk/laravel-email-change-confirmation)</a>
+<a href="https://laravel.com/docs">![Laravel 10 Support](https://img.shields.io/badge/Laravel-10.x|11.x|12.x-orange?style=flat-square&logo=laravel)</a>
+<a href="https://www.php.net">![PHP Version Support](https://img.shields.io/packagist/php-v/milenmk/laravel-email-change-confirmation?style=flat-square)</a>
+<a href="https://github.com/milenmk/laravel-email-change-confirmation/blob/develop/LICENSE.md">![License](https://img.shields.io/packagist/l/milenmk/laravel-email-change-confirmation.svg?style=flat-square)</a>
+<a href="https://github.com/milenmk/laravel-email-change-confirmation/issues">![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat-square)</a>
+<a href="https://www.patreon.com/c/LaravelAddonsbyMilen">![Sponsor me](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ff69b4?style=flat-square)</a>
+
+</div>
 
 A Laravel package that provides secure email change confirmation functionality. When users attempt to change their email
 address, they must confirm the change via their current email address before the change takes effect.
