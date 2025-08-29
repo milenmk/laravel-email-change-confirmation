@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.2.1
+
+#### Published: 2025-08-29
+
+- Enhance README with responsive badge links
+- Adds a list of other Laravel packages to the README
+- Improved DISCLAIMER in README
+
 ## V1.2.0
 
 #### Published at: 2025-08-14
