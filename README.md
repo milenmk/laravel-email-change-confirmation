@@ -31,8 +31,8 @@ address, they must confirm the change via their current email address before the
 
 ### Requirements
 
-- PHP 8.3 or higher
-- Laravel 10.0, 11.0, or 12.0
+- PHP 8.2 or higher
+- Laravel 10.0 ~ 13.0
 - User model must use the `Notifiable` trait
 
 Install the package via Composer:
